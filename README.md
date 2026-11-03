@@ -357,6 +357,24 @@ eventos_deportivos → users
 
 Las pruebas descritas son manuales; todavía no hay una suite automatizada.
 
+## Evidencias de funcionamiento
+
+Las capturas se encuentran en la carpeta `img/`.
+
+### Registro exitoso
+
+Respuesta HTTP 201 de POST /api/sessions/register, sin el campo password.
+También se verifica que el rol enviado como admin se guarda como user.
+
+![Registro exitoso sin contraseña](img/EvidenciaThunderClient.jpg)
+
+### Persistencia en MongoDB
+
+Usuario guardado en eventos_deportivos.users, con la contraseña hasheada
+mediante bcrypt y rol user. Corresponde al mismo usuario de la captura anterior.
+
+![Usuario persistido con contraseña hasheada](img/EvidenciaMongoDb.jpg)
+
 ## Autor
 
 Juan Manuel da Bouza.
