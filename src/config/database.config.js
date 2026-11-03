@@ -7,8 +7,11 @@ export const connectDatabase = async () => {
   }
 
   await mongoose.connect(env.mongoUrl, {
+    dbName: 'eventos_deportivos',
     serverSelectionTimeoutMS: 10000,
   });
 
-  console.log('MongoDB conectado correctamente');
+  console.log(
+    `MongoDB conectado a la base: ${mongoose.connection.name}`
+  );
 };
