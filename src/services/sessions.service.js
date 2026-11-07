@@ -1,8 +1,10 @@
 import {
   getUserByEmail,
+  getUserByEmailWithPassword,
   saveUser,
 } from '../repositories/users.repository.js';
-import { hashPassword } from '../utils/hash.js';
+import { signToken } from '../utils/jwt.js';
+import { comparePassword, hashPassword } from '../utils/hash.js';
 import AppError from '../utils/AppError.js';
 
 export const registerUser = async (data = {}) => {
@@ -83,4 +85,31 @@ export const registerUser = async (data = {}) => {
     email: user.email,
     role: user.role,
   };
+};
+
+export const loginUser = async (data) => {
+  const { email, password } = data ?? {};
+
+  if (
+    typeof email !== 'string' ||
+    !email.trim() ||
+    typeof password !== 'string' ||
+    !password ||
+    Buffer.byteLength(password, 'utf8') > 72
+  ) {
+    throw new AppError('Credenciales inválidas', 401);
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await getUserByEmailWithPassword(normalizedEmail);
+
+  if (!user || !(await comparePassword(password, user.password))) {
+    throw new AppError('Credenciales inválidas', 401);
+  }
+
+  return signToken({
+    id: user._id.toString(),
+    email: user.email,
+    role: user.role,
+  });
 };
