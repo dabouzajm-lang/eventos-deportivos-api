@@ -1,23 +1,43 @@
-import { verifyToken } from '../utils/jwt.js';
+import passport from '../config/passport.config.js';
 
-export const auth = (req, res, next) => {
-  const token = req.cookies?.currentUser;
+export const authenticate = (strategy) => {
+  return (req, res, next) => {
+    passport.authenticate(
+      strategy,
+      { session: false },
+      (error, user, info) => {
+        if (error) {
+          console.error(
+            `Error en la estrategia ${strategy}:`,
+            error.name,
+            error.message
+          );
 
-  if (!token) {
-    return res.status(401).json({
-      status: 'error',
-      message: 'No autenticado',
-    });
-  }
+          return res.status(500).json({
+            status: 'error',
+            message: 'Error interno del servidor',
+          });
+        }
 
-  try {
-    req.user = verifyToken(token);
-  } catch {
-    return res.status(401).json({
-      status: 'error',
-      message: 'No autenticado',
-    });
-  }
+        if (!user) {
+          const isCurrentStrategy = strategy === 'current';
 
-  return next();
+          return res.status(
+            isCurrentStrategy ? 401 : (info?.statusCode ?? 401)
+          ).json({
+            status: 'error',
+            message: isCurrentStrategy
+              ? 'No autenticado'
+              : (info?.message ?? 'Credenciales inválidas'),
+          });
+        }
+
+        req.user = user;
+
+        return next();
+      }
+    )(req, res, next);
+  };
 };
+
+export const auth = authenticate('current');

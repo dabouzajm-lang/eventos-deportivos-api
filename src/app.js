@@ -1,13 +1,20 @@
 import express from 'express';
+import cookieParser from 'cookie-parser';
+import passport, {
+  configurePassport,
+} from './config/passport.config.js';
 import healthRouter from './routes/health.router.js';
 import eventsRouter from './routes/events.router.js';
 import sessionsRouter from './routes/sessions.router.js';
-import cookieParser from 'cookie-parser';
 
 const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
+
+configurePassport();
+
+app.use(passport.initialize());
 
 app.use('/api/health', healthRouter);
 app.use('/api/events', eventsRouter);

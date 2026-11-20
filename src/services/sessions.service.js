@@ -3,7 +3,6 @@ import {
   getUserByEmailWithPassword,
   saveUser,
 } from '../repositories/users.repository.js';
-import { signToken } from '../utils/jwt.js';
 import { comparePassword, hashPassword } from '../utils/hash.js';
 import AppError from '../utils/AppError.js';
 
@@ -87,7 +86,7 @@ export const registerUser = async (data = {}) => {
   };
 };
 
-export const loginUser = async (data) => {
+export const loginUser = async (data = {}) => {
   const { email, password } = data ?? {};
 
   if (
@@ -107,9 +106,9 @@ export const loginUser = async (data) => {
     throw new AppError('Credenciales inválidas', 401);
   }
 
-  return signToken({
+  return {
     id: user._id.toString(),
     email: user.email,
     role: user.role,
-  });
+  };
 };

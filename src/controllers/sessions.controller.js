@@ -1,6 +1,5 @@
-import { loginUser, registerUser } from '../services/sessions.service.js';
 import { env } from '../config/env.config.js';
-import AppError from '../utils/AppError.js';
+import { signToken, verifyToken } from '../utils/jwt.js';
 
 const authCookieOptions = {
   httpOnly: true,
@@ -10,44 +9,38 @@ const authCookieOptions = {
 };
 
 export const getSessionsStatus = (req, res) => {
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     message: 'Recurso sessions preparado. Registro disponible.',
   });
 };
 
-export const register = async (req, res) => {
-  try {
-    const user = await registerUser(req.body);
+export const register = (req, res) => {
+  const { id, first_name, last_name, email, role } = req.user;
 
-    return res.status(201).json({
-      status: 'success',
-      payload: user,
-    });
-  } catch (error) {
-    if (error instanceof AppError) {
-      return res.status(error.statusCode).json({
-        status: 'error',
-        message: error.message,
-      });
-    }
-
-    console.error('Error inesperado al registrar usuario:', error.name);
-
-    return res.status(500).json({
-      status: 'error',
-      message: 'Error interno del servidor',
-    });
-  }
+  return res.status(201).json({
+    status: 'success',
+    payload: {
+      id,
+      first_name,
+      last_name,
+      email,
+      role,
+    },
+  });
 };
 
-export const login = async (req, res) => {
+export const login = (req, res) => {
   try {
-    const token = await loginUser(req.body);
+    const { id, email, role } = req.user;
+    const token = signToken({ id, email, role });
+    const { exp } = verifyToken(token);
+
+    const maxAge = Math.max(0, exp * 1000 - Date.now());
 
     res.cookie('currentUser', token, {
       ...authCookieOptions,
-      maxAge: 3600000,
+      maxAge,
     });
 
     return res.status(200).json({
@@ -55,15 +48,12 @@ export const login = async (req, res) => {
       message: 'Login correcto',
     });
   } catch (error) {
-    if (error instanceof AppError) {
-      return res.status(error.statusCode).json({
-        status: 'error',
-        message: error.message,
-      });
-    }
+    console.error(
+      'Error inesperado al iniciar sesión:',
+      error.name,
+      error.message
+    );
 
-    console.error('Error inesperado al iniciar sesión:', error.name, error.message);
-    console.error('Ubicación:', error.stack?.split('\n')[1]?.trim());
     return res.status(500).json({
       status: 'error',
       message: 'Error interno del servidor',
@@ -76,7 +66,11 @@ export const current = (req, res) => {
 
   return res.status(200).json({
     status: 'success',
-    payload: { id, email, role },
+    payload: {
+      id,
+      email,
+      role,
+    },
   });
 };
 
